@@ -14,45 +14,34 @@ variable "chart_version" {
   default     = "1.11.0"
 }
 
-variable "cluster_issuer_server" {
-  description = "The ACME server URL"
-  type        = string
-  default     = "https://acme-v02.api.letsencrypt.org/directory"
+variable "install_crds" {
+  description = "Whether to install CRDs"
+  type        = bool
+  default     = true
 }
 
-variable "cluster_issuer_preferred_chain" {
-  description = "Preferred chain for ClusterIssuer"
-  default     = "ISRG Root X1"
-  type        = string
-}
-
-variable "cluster_issuer_email" {
-  description = "Email address used for ACME registration"
-  type        = string
-}
-
-variable "cluster_issuer_private_key_secret_name" {
-  description = "Name of a secret used to store the ACME account private key"
-  type        = string
-  default     = "cert-manager-private-key"
-}
-
-variable "cluster_issuer_name" {
-  description = "Cluster Issuer Name, used for annotations"
-  type        = string
-  default     = "cert-manager"
+variable "cluster_issuers" {
+  description = <<EOF
+  Map of Cluster Issuer configurations. Each key is a Cluster Issuer name with its configuration:
+    - email: Email address used for ACME registration
+    - private_key_secret_name: Name of a secret used to store the ACME account private key
+    - server: The ACME server URL
+    - preferred_chain: Preferred chain for ClusterIssuer
+    - yaml: (Optional) Custom YAML configuration for the ClusterIssuer
+  EOF
+  type = map(object({
+    email                  = optional(string, "admin@mysite.com")
+    private_key_secret_name = optional(string, "cert-manager-private-key")
+    server                 = optional(string, "https://acme-staging-v02.api.letsencrypt.org/directory")
+    preferred_chain        = optional(string, "ISRG Root X1")
+    yaml                   = optional(string, null)
+  }))
 }
 
 variable "cluster_issuer_create" {
   description = "Create Cluster Issuer"
   type        = bool
   default     = true
-}
-
-variable "cluster_issuer_yaml" {
-  description = "Create Cluster Issuer with your yaml"
-  type        = string
-  default     = null
 }
 
 variable "additional_set" {

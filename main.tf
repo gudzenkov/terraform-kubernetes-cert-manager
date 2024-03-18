@@ -20,7 +20,7 @@ resource "helm_release" "cert_manager" {
 
   set {
     name  = "installCRDs"
-    value = "true"
+    value = tostring(var.install_crds)
   }
 
   dynamic "set" {
@@ -40,11 +40,11 @@ resource "time_sleep" "wait" {
 }
 
 resource "kubectl_manifest" "cluster_issuer" {
-  count = var.cluster_issuer_create ? 1 : 0
+  for_each = var.cluster_issuer_create ? var.cluster_issuers : {}
 
   validate_schema = false
 
-  yaml_body = var.cluster_issuer_yaml == null ? yamlencode(local.cluster_issuer) : var.cluster_issuer_yaml
+  yaml_body = each.value.yaml != null ? each.value.yaml : yamlencode(local.cluster_issuers_config[each.key])
 
   depends_on = [kubernetes_namespace.cert_manager, helm_release.cert_manager, time_sleep.wait]
 }
@@ -70,7 +70,7 @@ module "certificates" {
   dns_names             = each.value.dns_names
   uris                  = try(each.value.uris, [])
   ip_addresses          = try(each.value.ip_addresses, [])
-  issuer_name           = try(each.value.issuer_name, var.cluster_issuer_name)
+  issuer_name           = try(each.value.issuer_name, var.cluster_issuers[0].name)
   issuer_kind           = try(each.value.issuer_kind, "ClusterIssuer")
   issuer_group          = try(each.value.issuer_group, "")
 }
